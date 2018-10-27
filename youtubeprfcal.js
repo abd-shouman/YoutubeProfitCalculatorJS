@@ -89,7 +89,7 @@ function appendPre(message) {
 
 //Reads channel's data from Youtube API's reponse and print it
 function extractAndPrintChannelData(response){
-var channel = response.items[0];
+var channel = response.result.items[0];
     appendPre('This channel\'s ID is ' + channel.id + '. ' +
               'Its title is \'' + channel.snippet.title + ', ' +
               'and it has ' + channel.statistics.viewCount + ' views.');
@@ -104,32 +104,37 @@ function removeEmptyParams(params) {
     return params;
   }
 
-function executeRequest(request) {
-    request.execute(function(response) {
-      console.log(response);    
-      extractAndPrintChannelData(response);
-    });
-  }
+// function executeRequest(request) {
+//     console.log("executing request")
+//     // return request.execute(function(response) {
+//     //   console.log("requested")
+//     //   console.log(response);    
+//     //   //extractAndPrintChannelData(response);
+//     // });
+//     return request.execute();
+// }
 
 function buildApiRequest(requestMethod, path, params, properties) {
-params = removeEmptyParams(params);
-var request;
-if (properties) {
-    var resource = createResource(properties);
-    request = gapi.client.request({
-        'body': resource,
-        'method': requestMethod,
-        'path': path,
-        'params': params
-    });
-} else {
-    request = gapi.client.request({
-        'method': requestMethod,
-        'path': path,
-        'params': params
-    });
-}
-executeRequest(request);
+  console.log("buildApiRequest")
+  params = removeEmptyParams(params);
+  var request;
+  if (properties) {
+      var resource = createResource(properties);
+      request = gapi.client.request({
+          'body': resource,
+          'method': requestMethod,
+          'path': path,
+          'params': params
+      });
+  } else {
+      request = gapi.client.request({
+          'method': requestMethod,
+          'path': path,
+          'params': params
+      });
+  }
+  //return executeRequest(request);  
+  return request;
 }
 /**
  * End of Youtube API Communication
@@ -139,10 +144,17 @@ executeRequest(request);
  * Calculate Profit
  */
 function calculateProfit(){
-    buildApiRequest('GET',
-                '/youtube/v3/channels',
-                {'id': $('#channel-id')[0].value,
-                 'part': 'snippet,contentDetails,statistics'});
+  console.log("calculateProfit")
+  var request = buildApiRequest('GET',
+              '/youtube/v3/channels',
+              {'id': $('#channel-id')[0].value,
+                'part': 'snippet,contentDetails,statistics'});
+  
+  request.then(function(response){
+    console.log("at then yo");
+    console.log(response);
+    extractAndPrintChannelData(response);
+  });
 
 }
 /**
