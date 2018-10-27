@@ -86,6 +86,15 @@ function appendPre(message) {
 /**
  * Youtube API Communication
  */
+
+//Reads channel's data from Youtube API's reponse and print it
+function extractAndPrintChannelData(response){
+var channel = response.items[0];
+    appendPre('This channel\'s ID is ' + channel.id + '. ' +
+              'Its title is \'' + channel.snippet.title + ', ' +
+              'and it has ' + channel.statistics.viewCount + ' views.');
+}
+
 function removeEmptyParams(params) {
     for (var p in params) {
       if (!params[p] || params[p] == 'undefined') {
@@ -97,7 +106,8 @@ function removeEmptyParams(params) {
 
 function executeRequest(request) {
     request.execute(function(response) {
-      console.log(response);
+      console.log(response);    
+      extractAndPrintChannelData(response);
     });
   }
 
@@ -132,7 +142,7 @@ function calculateProfit(){
     buildApiRequest('GET',
                 '/youtube/v3/channels',
                 {'id': $('#channel-id')[0].value,
-                 'part': 'statistics'});
+                 'part': 'snippet,contentDetails,statistics'});
 
 }
 /**
