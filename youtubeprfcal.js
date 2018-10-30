@@ -88,21 +88,13 @@ function appendPre(message) {
  */
 
 //Reads channel's data from Youtube API's reponse and print it
-function extractAndPrintChannelData(response){
-var channel = response.result.items[0];
-    appendPre('This channel\'s ID is ' + channel.id + '. ' +
+function extractAndPrintChannelData(channel, revenue){
+//var channel = response.result.items[0];
+    appendPre('\nThis channel\'s ID is ' + channel.id + '. ' +
               'Its title is \'' + channel.snippet.title + ', ' +
-              'and it has ' + channel.statistics.viewCount + ' views.');
+              'and it has ' + channel.statistics.viewCount + ' views, ' + 
+              '\nand its estimation revenue range is ' + revenue.lowerEst + ' - ' + revenue.upperEst );
 }
-
-function removeEmptyParams(params) {
-    for (var p in params) {
-      if (!params[p] || params[p] == 'undefined') {
-        delete params[p];
-      }
-    }
-    return params;
-  }
 
 // function executeRequest(request) {
 //     console.log("executing request")
@@ -136,6 +128,15 @@ function buildApiRequest(requestMethod, path, params, properties) {
   //return executeRequest(request);  
   return request;
 }
+
+function removeEmptyParams(params) {
+  for (var p in params) {
+    if (!params[p] || params[p] == 'undefined') {
+      delete params[p];
+    }
+  }
+  return params;
+}
 /**
  * End of Youtube API Communication
  */
@@ -153,7 +154,14 @@ function calculateProfit(){
   request.then(function(response){
     console.log("at then yo");
     console.log(response);
-    extractAndPrintChannelData(response);
+    
+    var channel = response.result.items[0];
+    //Assuming an range CPM (Cost per thousand) between 0.45 USD to 25 USD 
+    //Simple equation to be updated later 
+    var revenue = {};
+    revenue.lowerEst = (channel.statistics.viewCount/1000) * (0.45)
+    revenue.upperEst = (channel.statistics.viewCount/1000) * (25) 
+    extractAndPrintChannelData(channel, revenue);
   });
 
 }
