@@ -1,32 +1,13 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>YouTube Data API Quickstart</title>
-    <meta charset='utf-8' />
-  </head>
-  <body>
-    <p>YouTube Data API Quickstart</p>
+<button id="sign-in-or-out-button"
+        style="margin-left: 25px">Sign In/Authorize</button>
+<button id="revoke-access-button"
+        style="display: none; margin-left: 25px">Revoke access</button>
 
-    <!--Add buttons to initiate auth sequence and sign out-->
-    <button id="authorize-button" style="display: none;">Authorize</button>
-    <button id="signout-button" style="display: none;">Sign Out</button>
-    <button id="calculate-button" style="display: none;">Calculate Profit</button>
+<div id="auth-status" style="display: inline; padding-left: 25px"></div><hr>
 
-    <label for="basic-url">Your vanity URL</label>
-    <div class="input-group">
-      <span class="input-group-addon" id="basic-addon3">https://youtube.com/</span>
-      <input type="text" class="form-control" id="channel-id" aria-describedby="basic-addon3" value="UCzve9ZBBT6_Nt_3j-qHyheQ">
-    </div>
-
-    
-
-    <pre id="content"></pre>
-
-    <script src="/youtubeprfcal.js"></script>
-    <script async defer src="https://apis.google.com/js/api.js"
-      onload="this.onload=function(){};handleClientLoad()"
-      onreadystatechange="if (this.readyState === 'complete') this.onload()">
-    </script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>    
-  </body>
-</html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="youtubeprfcal.js"></script>
+<script async defer src="https://apis.google.com/js/api.js" 
+        onload="this.onload=function(){};handleClientLoad()" 
+        onreadystatechange="if (this.readyState === 'complete') this.onload()">
+</script>

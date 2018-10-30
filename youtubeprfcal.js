@@ -1,185 +1,79 @@
 // Client ID and API key from the Developer Console
 var CLIENT_ID = '669094137680-a3gphu17c5erj1r4igtafbjhaa61965m.apps.googleusercontent.com';
+var API_KEY = "AIzaSyAgoLL_F_fzRhAdXQk--19ONBMG_mWA5zk";
 
-// Array of API discovery doc URLs for APIs used by the quickstart
-var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest"];
-
-// Authorization scopes required by the API. If using multiple scopes,
-// separated them with spaces.
-var SCOPES = 'https://www.googleapis.com/auth/youtube.readonly';
-
-var authorizeButton = document.getElementById('authorize-button');
-var calculateButton = document.getElementById('calculate-button');
-var signoutButton = document.getElementById('signout-button');
-
-/**
- *  On load, called to load the auth2 library and API client library.
- */
+var GoogleAuth;
+var SCOPE = 'https://www.googleapis.com/auth/yt-analytics.readonly';
 function handleClientLoad() {
+  // Load the API's client and auth2 modules.
+  // Call the initClient function after the modules load.
   gapi.load('client:auth2', initClient);
 }
 
-/**
- *  Initializes the API client library and sets up sign-in state
- *  listeners.
- */
 function initClient() {
+  // Retrieve the discovery document for version 1 of YouTube Analytics API.
+  // In practice, your app can retrieve one or more discovery documents.
+  var discoveryUrl = 'https://www.googleapis.com/discovery/v1/apis/youtubeAnalytics/v1/rest';
+
+  // Initialize the gapi.client object, which app uses to make API requests.
+  // Get API key and client ID from API Console.
+  // 'scope' field specifies space-delimited list of access scopes.
   gapi.client.init({
-    discoveryDocs: DISCOVERY_DOCS,
-    clientId: CLIENT_ID,
-    scope: SCOPES
+      'apiKey': API_KEY,
+      'discoveryDocs': [discoveryUrl],
+      'clientId': CLIENT_ID,
+      'scope': SCOPE
   }).then(function () {
+    GoogleAuth = gapi.auth2.getAuthInstance();
+
     // Listen for sign-in state changes.
-    gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+    GoogleAuth.isSignedIn.listen(updateSigninStatus);
 
-    // Handle the initial sign-in state.
-    updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-    authorizeButton.onclick = handleAuthClick;
-    signoutButton.onclick = handleSignoutClick;
-    calculateButton.onclick = calculateProfit;
+    // Handle initial sign-in state. (Determine if user is already signed in.)
+    var user = GoogleAuth.currentUser.get();
+    setSigninStatus();
+
+    // Call handleAuthClick function when user clicks on
+    //      "Sign In/Authorize" button.
+    $('#sign-in-or-out-button').click(function() {
+      handleAuthClick();
+    }); 
+    $('#revoke-access-button').click(function() {
+      revokeAccess();
+    }); 
   });
 }
 
-/**
- *  Called when the signed in status changes, to update the UI
- *  appropriately. After a sign-in, the API is called.
- */
+function handleAuthClick() {
+  if (GoogleAuth.isSignedIn.get()) {
+    // User is authorized and has clicked 'Sign out' button.
+    GoogleAuth.signOut();
+  } else {
+    // User is not signed in. Start Google auth flow.
+    GoogleAuth.signIn();
+  }
+}
+
+function revokeAccess() {
+  GoogleAuth.disconnect();
+}
+
+function setSigninStatus(isSignedIn) {
+  var user = GoogleAuth.currentUser.get();
+  var isAuthorized = user.hasGrantedScopes(SCOPE);
+  if (isAuthorized) {
+    $('#sign-in-or-out-button').html('Sign out');
+    $('#revoke-access-button').css('display', 'inline-block');
+    $('#auth-status').html('You are currently signed in and have granted ' +
+        'access to this app.');
+  } else {
+    $('#sign-in-or-out-button').html('Sign In/Authorize');
+    $('#revoke-access-button').css('display', 'none');
+    $('#auth-status').html('You have not authorized this app or you are ' +
+        'signed out.');
+  }
+}
+
 function updateSigninStatus(isSignedIn) {
-  if (isSignedIn) {
-    authorizeButton.style.display = 'none';
-    signoutButton.style.display = 'block';
-    calculateButton.style.display = 'block';
-    getChannel();
-  } else {
-    authorizeButton.style.display = 'block';
-    signoutButton.style.display = 'none';
-    calculateButton.style.display = 'none';
-  }
-}
-
-/**
- *  Sign in the user upon button click.
- */
-function handleAuthClick(event) {
-  gapi.auth2.getAuthInstance().signIn();
-}
-
-/**
- *  Sign out the user upon button click.
- */
-function handleSignoutClick(event) {
-  gapi.auth2.getAuthInstance().signOut();
-}
-
-/**
- * Append text to a pre element in the body, adding the given message
- * to a text node in that element. Used to display info from API response.
- *
- * @param {string} message Text to be placed in pre element.
- */
-function appendPre(message) {
-  var pre = document.getElementById('content');
-  var textContent = document.createTextNode(message + '\n');
-  pre.appendChild(textContent);
-}
-
-/**
- * Youtube API Communication
- */
-
-//Reads channel's data from Youtube API's reponse and print it
-function extractAndPrintChannelData(channel, revenue){
-//var channel = response.result.items[0];
-    appendPre('\nThis channel\'s ID is ' + channel.id + '. ' +
-              'Its title is \'' + channel.snippet.title + ', ' +
-              'and it has ' + channel.statistics.viewCount + ' views, ' + 
-              '\nand its estimation revenue range is ' + revenue.lowerEst + ' - ' + revenue.upperEst );
-}
-
-// function executeRequest(request) {
-//     console.log("executing request")
-//     // return request.execute(function(response) {
-//     //   console.log("requested")
-//     //   console.log(response);    
-//     //   //extractAndPrintChannelData(response);
-//     // });
-//     return request.execute();
-// }
-
-function buildApiRequest(requestMethod, path, params, properties) {
-  console.log("buildApiRequest")
-  params = removeEmptyParams(params);
-  var request;
-  if (properties) {
-      var resource = createResource(properties);
-      request = gapi.client.request({
-          'body': resource,
-          'method': requestMethod,
-          'path': path,
-          'params': params
-      });
-  } else {
-      request = gapi.client.request({
-          'method': requestMethod,
-          'path': path,
-          'params': params
-      });
-  }
-  //return executeRequest(request);  
-  return request;
-}
-
-function removeEmptyParams(params) {
-  for (var p in params) {
-    if (!params[p] || params[p] == 'undefined') {
-      delete params[p];
-    }
-  }
-  return params;
-}
-/**
- * End of Youtube API Communication
- */
-
-/**
- * Calculate Profit
- */
-function calculateProfit(){
-  console.log("calculateProfit")
-  var request = buildApiRequest('GET',
-              '/youtube/v3/channels',
-              {'id': $('#channel-id')[0].value,
-                'part': 'snippet,contentDetails,statistics'});
-  
-  request.then(function(response){
-    console.log("at then yo");
-    console.log(response);
-    
-    var channel = response.result.items[0];
-    //Assuming an range CPM (Cost per thousand) between 0.45 USD to 25 USD 
-    //Simple equation to be updated later 
-    var revenue = {};
-    revenue.lowerEst = (channel.statistics.viewCount/1000) * (0.45)
-    revenue.upperEst = (channel.statistics.viewCount/1000) * (25) 
-    extractAndPrintChannelData(channel, revenue);
-  });
-
-}
-/**
- * End of Calculate profit
- */
-
-/**
- * Print files.
- */
-function getChannel() {
-  gapi.client.youtube.channels.list({
-    'part': 'snippet,contentDetails,statistics',
-    'forUsername': 'GoogleDevelopers'
-  }).then(function(response) {
-    var channel = response.result.items[0];
-    appendPre('This channel\'s ID is ' + channel.id + '. ' +
-              'Its title is \'' + channel.snippet.title + ', ' +
-              'and it has ' + channel.statistics.viewCount + ' views.');
-  });
+  setSigninStatus();
 }
