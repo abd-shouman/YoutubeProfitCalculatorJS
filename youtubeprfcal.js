@@ -3,6 +3,7 @@ var CLIENT_ID = '669094137680-a3gphu17c5erj1r4igtafbjhaa61965m.apps.googleuserco
 var API_KEY = "AIzaSyAgoLL_F_fzRhAdXQk--19ONBMG_mWA5zk";
 
 var GoogleAuth;
+//var SCOPE = 'https://www.googleapis.com/auth/yt-analytics-monetary.readonly';
 var SCOPE = 'https://www.googleapis.com/auth/yt-analytics.readonly';
 function handleClientLoad() {
   // Load the API's client and auth2 modules.
@@ -10,6 +11,9 @@ function handleClientLoad() {
   gapi.load('client:auth2', initClient);
 }
 
+/**
+ * Handle Authentication
+ */
 function initClient() {
   // Retrieve the discovery document for version 1 of YouTube Analytics API.
   // In practice, your app can retrieve one or more discovery documents.
@@ -40,7 +44,10 @@ function initClient() {
     }); 
     $('#revoke-access-button').click(function() {
       revokeAccess();
-    }); 
+    });
+    $('#execute').click(function(){
+      execute();
+    })
   });
 }
 
@@ -64,11 +71,13 @@ function setSigninStatus(isSignedIn) {
   if (isAuthorized) {
     $('#sign-in-or-out-button').html('Sign out');
     $('#revoke-access-button').css('display', 'inline-block');
+    $('#execute').css('display', 'inline-block');
     $('#auth-status').html('You are currently signed in and have granted ' +
         'access to this app.');
   } else {
     $('#sign-in-or-out-button').html('Sign In/Authorize');
     $('#revoke-access-button').css('display', 'none');
+    $('#execute').css('display', 'none');
     $('#auth-status').html('You have not authorized this app or you are ' +
         'signed out.');
   }
@@ -76,4 +85,27 @@ function setSigninStatus(isSignedIn) {
 
 function updateSigninStatus(isSignedIn) {
   setSigninStatus();
+}
+/**
+ * End of Handle Authentication
+ */
+
+ /**
+  * Youtube Analytics and Reports API Communaction
+  */
+ // Make sure the client is loaded and sign-in is complete before calling this method.
+ function execute() {
+  return gapi.client.youtubeAnalytics.reports.query({
+    "ids": "channel==MINE",
+    "start-date": "2017-01-01",
+    "end-date": "2017-12-12",
+    "metrics": "views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained",
+    //"metrics":"views,estimatedRevenue,estimatedAdRevenue,estimatedRedPartnerRevenue",
+    "dimensions": "day",
+    "sort": "day"
+  }).then(function(response) {
+              // Handle the results here (response.result has the parsed body).
+              console.log("Response", response);
+            },
+            function(err) { console.error("Execute error", err); });
 }
